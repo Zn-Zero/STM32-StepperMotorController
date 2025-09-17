@@ -280,7 +280,7 @@ void Motor_SetPWM(uint16_t duty)
 {
     if(duty > 1000) duty = 1000;
     // 根据自动重装载值计算比较值
-    TIM_SetCompare1(MOTOR_PUL_TIM, (uint16_t)(duty * TIM_GetAutoreload(MOTOR_PUL_TIM) / 1000));
+    // TIM_SetCompare1(MOTOR_PUL_TIM, (uint16_t)(duty * TIM_GetAutoreload(MOTOR_PUL_TIM) / 1000));
 }
 
 // 读取编码器值
