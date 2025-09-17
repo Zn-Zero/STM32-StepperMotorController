@@ -649,88 +649,9 @@
         </Group>
         <Group>
           <GroupName>System</GroupName>
-          <Files>
-            <File>
-              <FileName>Delay.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\System\Delay.c</FilePath>
-            </File>
-            <File>
-              <FileName>Delay.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\System\Delay.h</FilePath>
-            </File>
-          </Files>
         </Group>
         <Group>
           <GroupName>Hardware</GroupName>
-          <Files>
-            <File>
-              <FileName>Init.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Hardware\Init.c</FilePath>
-            </File>
-            <File>
-              <FileName>Init.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Hardware\Init.h</FilePath>
-            </File>
-            <File>
-              <FileName>OLED.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Hardware\OLED.c</FilePath>
-            </File>
-            <File>
-              <FileName>OLED.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Hardware\OLED.h</FilePath>
-            </File>
-            <File>
-              <FileName>OLED_Font.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Hardware\OLED_Font.h</FilePath>
-            </File>
-            <File>
-              <FileName>Buzzer.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Hardware\Buzzer.c</FilePath>
-            </File>
-            <File>
-              <FileName>Buzzer.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Hardware\Buzzer.h</FilePath>
-            </File>
-            <File>
-              <FileName>Encoder.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Hardware\Encoder.c</FilePath>
-            </File>
-            <File>
-              <FileName>Encoder.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Hardware\Encoder.h</FilePath>
-            </File>
-            <File>
-              <FileName>Motor.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Hardware\Motor.c</FilePath>
-            </File>
-            <File>
-              <FileName>Motor.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Hardware\Motor.h</FilePath>
-            </File>
-            <File>
-              <FileName>Button.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Hardware\Button.c</FilePath>
-            </File>
-            <File>
-              <FileName>Button.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Hardware\Button.h</FilePath>
-            </File>
-          </Files>
         </Group>
         <Group>
           <GroupName>User</GroupName>
@@ -739,16 +660,6 @@
               <FileName>main.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\User\main.c</FilePath>
-            </File>
-            <File>
-              <FileName>ExternParam_def.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\User\ExternParam_def.h</FilePath>
-            </File>
-            <File>
-              <FileName>Pin_def.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\User\Pin_def.h</FilePath>
             </File>
             <File>
               <FileName>stm32f10x_conf.h</FileName>
@@ -764,6 +675,21 @@
               <FileName>stm32f10x_it.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\User\stm32f10x_it.h</FilePath>
+            </File>
+            <File>
+              <FileName>peripheral_define.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\User\peripheral_define.h</FilePath>
+            </File>
+            <File>
+              <FileName>peripheral_init.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\User\peripheral_init.c</FilePath>
+            </File>
+            <File>
+              <FileName>peripheral_init.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\User\peripheral_init.h</FilePath>
             </File>
           </Files>
         </Group>
