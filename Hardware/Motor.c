@@ -1,13 +1,14 @@
 #include "stm32f10x.h" // Device header
-#include "peripheral_init.h"
 #include "peripheral_define.h"
 
 #define MAX_FREQ 200000 // 最大频率200kHz
 #define MIN_FREQ 10     // 最小频率10Hz，可根据需要调整
 
 // 电机PWM定时器初始化
-void MotorPWM_TIM_Init(uint32_t frequency)
+void Motor_Init(uint32_t frequency)
 {
+    GPIO_InitTypeDef GPIO_InitStructure;
+
     // 限制频率范围
     if (frequency > MAX_FREQ) frequency = MAX_FREQ;
     if (frequency < MIN_FREQ) frequency = MIN_FREQ;

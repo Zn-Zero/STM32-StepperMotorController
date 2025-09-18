@@ -4,34 +4,9 @@
 
 // GPIO初始化
 void GPIO_InitAll(void)
-{
-    GPIO_InitTypeDef GPIO_InitStructure;
-    
+{   
     // 使能所有用到的GPIO时钟
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB | RCC_APB2Periph_AFIO, ENABLE);
-    
-    // 按键初始化 - 上拉输入
-    // 启停按键 PA0
-    GPIO_InitStructure.GPIO_Pin = KEY_START_STOP_PIN;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
-    GPIO_Init(KEY_START_STOP_PORT, &GPIO_InitStructure);
-    
-    // 编码器按键 PA2
-    GPIO_InitStructure.GPIO_Pin = KEY_ENCODER_PIN;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
-    GPIO_Init(KEY_ENCODER_PORT, &GPIO_InitStructure);
-
-    // 三档定速按键 PB13
-    // 暂缓实现
-    // GPIO_InitStructure.GPIO_Pin = KEY_SPEED_LEVEL_PIN;
-    // GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
-    // GPIO_Init(KEY_SPEED_LEVEL_PORT, &GPIO_InitStructure);
-    
-    // 编码器A/B相初始化 - 复用推挽输入 (定时器模式)
-    GPIO_InitStructure.GPIO_Pin = ENCODER_A_PIN | ENCODER_B_PIN;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_Init(ENCODER_PORT, &GPIO_InitStructure);
     
     // 电机方向控制 PA5 - 推挽输出
     GPIO_InitStructure.GPIO_Pin = MOTOR_DIR_PIN;
@@ -45,84 +20,10 @@ void GPIO_InitAll(void)
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(MOTOR_PUL_PORT, &GPIO_InitStructure);
 
-    // 传感器输入 PA7 - 模拟输入
-    // 暂缓实现
-    // GPIO_InitStructure.GPIO_Pin = SENSOR_PIN;
-    // GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
-    // GPIO_Init(SENSOR_PORT, &GPIO_InitStructure);
-    
-    // 蜂鸣器 PB0 - 推挽输出
-    GPIO_InitStructure.GPIO_Pin = BUZZER_PIN;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_Init(BUZZER_PORT, &GPIO_InitStructure);
-    
-    // LED PB1 - 推挽输出
-    GPIO_InitStructure.GPIO_Pin = LED_PIN;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_Init(LED_PORT, &GPIO_InitStructure);
-
-    // 触摸屏I2C引脚初始化 - 复用开漏输出
-    // 暂缓实现
-    // GPIO_InitStructure.GPIO_Pin = TOUCH_SCL_PIN | TOUCH_SDA_PIN;
-    // GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_OD;
-    // GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    // GPIO_Init(GPIOB, &GPIO_InitStructure);
-    
     // 初始状态设置
-    BUZZER_OFF();
-    LED_OFF();
+    
+    
     MOTOR_DIR_FORWARD();
-}
-
-// 外部中断初始化
-void EXTI_InitAll(void)
-{
-    EXTI_InitTypeDef EXTI_InitStructure;
-    NVIC_InitTypeDef NVIC_InitStructure;
-    
-    // 配置中断线映射
-    GPIO_EXTILineConfig(GPIO_PortSourceGPIOA, GPIO_PinSource0);  // 启停按键
-    GPIO_EXTILineConfig(GPIO_PortSourceGPIOA, GPIO_PinSource2);  // 编码器按键
-    // GPIO_EXTILineConfig(GPIO_PortSourceGPIOB, GPIO_PinSource13); // 三档定速按键
-    
-    // 启停按键中断配置 - 下降沿触发
-    EXTI_InitStructure.EXTI_Line = KEY_START_STOP_EXTI;
-    EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-    EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
-    EXTI_InitStructure.EXTI_LineCmd = ENABLE;
-    EXTI_Init(&EXTI_InitStructure);
-    
-    // 编码器按键中断配置 - 下降沿触发
-    EXTI_InitStructure.EXTI_Line = KEY_ENCODER_EXTI;
-    EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
-    EXTI_Init(&EXTI_InitStructure);
-    
-    // 三档定速按键中断配置 - 下降沿触发
-    // EXTI_InitStructure.EXTI_Line = KEY_SPEED_LEVEL_EXTI;
-    // EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
-    // EXTI_Init(&EXTI_InitStructure);
-    
-    // 配置中断优先级
-    // 启停按键中断
-    NVIC_InitStructure.NVIC_IRQChannel = KEY_START_STOP_IRQ;
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x01;
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x01;
-    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-    NVIC_Init(&NVIC_InitStructure);
-    
-    // 编码器按键中断
-    NVIC_InitStructure.NVIC_IRQChannel = KEY_ENCODER_IRQ;
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x01;
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x02;
-    NVIC_Init(&NVIC_InitStructure);
-    
-    // 三档定速按键中断
-    // NVIC_InitStructure.NVIC_IRQChannel = KEY_SPEED_LEVEL_IRQ;
-    // NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x01;
-    // NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x03;
-    // NVIC_Init(&NVIC_InitStructure);
 }
 
 // 编码器定时器初始化 (编码器模式)
@@ -163,64 +64,9 @@ void Encoder_TIM_Init(void)
     TIM_Cmd(ENCODER_TIM, ENABLE);
 }
 
-// ADC初始化 (用于传感器)
-// 暂缓实现
-void ADC_InitSensor(void)
-{
-    ADC_InitTypeDef ADC_InitStructure;
-    
-    // 使能ADC时钟
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
-    // ADC时钟分频 (最大14MHz)
-    RCC_ADCCLKConfig(RCC_PCLK2_Div6);
-    
-    // ADC配置
-    ADC_InitStructure.ADC_Mode = ADC_Mode_Independent;
-    ADC_InitStructure.ADC_ScanConvMode = DISABLE;  // 单通道模式
-    ADC_InitStructure.ADC_ContinuousConvMode = ENABLE;  // 连续转换
-    ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None;  // 软件触发
-    ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;  // 右对齐
-    ADC_InitStructure.ADC_NbrOfChannel = 1;  // 转换通道数量
-    ADC_Init(SENSOR_ADC, &ADC_InitStructure);
-    
-    // 配置ADC通道转换顺序和采样时间
-    ADC_RegularChannelConfig(SENSOR_ADC, SENSOR_ADC_CHANNEL, 1, ADC_SampleTime_239Cycles5);
-    
-    // 使能ADC
-    ADC_Cmd(SENSOR_ADC, ENABLE);
-    
-    // ADC校准
-    ADC_ResetCalibration(SENSOR_ADC);
-    while(ADC_GetResetCalibrationStatus(SENSOR_ADC));
-    
-    ADC_StartCalibration(SENSOR_ADC);
-    while(ADC_GetCalibrationStatus(SENSOR_ADC));
-    
-    // 开始ADC转换
-    ADC_SoftwareStartConvCmd(SENSOR_ADC, ENABLE);
-}
 
-// I2C初始化 (用于触摸屏)
-// 暂缓实现
-void I2C_InitTouchScreen(void)
-{
-    I2C_InitTypeDef I2C_InitStructure;
-    
-    // 使能I2C时钟
-    RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C2, ENABLE);
-    
-    // I2C配置
-    I2C_InitStructure.I2C_Mode = I2C_Mode_I2C;
-    I2C_InitStructure.I2C_DutyCycle = I2C_DutyCycle_2;
-    I2C_InitStructure.I2C_OwnAddress1 = 0x00;  // 主机模式不需要自己的地址
-    I2C_InitStructure.I2C_Ack = I2C_Ack_Enable;
-    I2C_InitStructure.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
-    I2C_InitStructure.I2C_ClockSpeed = 400000;  // 400kHz高速模式
-    I2C_Init(TOUCH_I2C, &I2C_InitStructure);
-    
-    // 使能I2C
-    I2C_Cmd(TOUCH_I2C, ENABLE);
-}
+
+
 
 // 所有外设初始化
 void Peripheral_InitAll(void)
@@ -252,10 +98,3 @@ int16_t Encoder_GetCount(void)
     return count;
 }
 
-// 读取传感器值 (0-4095对应0-3.3V)
-uint16_t Sensor_ReadValue(void)
-{
-    // 等待ADC转换完成
-    while(!ADC_GetFlagStatus(SENSOR_ADC, ADC_FLAG_EOC));
-    return ADC_GetConversionValue(SENSOR_ADC);
-}
