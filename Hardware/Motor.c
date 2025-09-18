@@ -1,5 +1,6 @@
 #include "stm32f10x.h" // Device header
 #include "peripheral_define.h"
+#include "Delay.h"
 
 #define MAX_FREQ 200000 // 最大频率200kHz
 #define MIN_FREQ 10     // 最小频率10Hz，可根据需要调整
@@ -44,6 +45,9 @@ void Motor_Init(uint32_t frequency)
     }
 
     current_arr = arr_value; // 保存当前ARR值
+
+    // 使能定时器时钟
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
 
     TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
     // 配置定时器时基
@@ -110,7 +114,7 @@ void Trapezoidal_Acceleration(uint32_t current, uint32_t target)
     for (uint32_t freq = current; freq <= target; freq += 100)
     {
         Motor_SetFrequency(freq);
-        Delay_us(10)
+        Delay_us(10);
     }
 }
 
@@ -120,6 +124,6 @@ void Trapezoidal_Deceleration(uint32_t current, uint32_t target)
     for (uint32_t freq = current; freq >= target; freq -= 100)
     {
         Motor_SetFrequency(freq);
-        Delay_us(10)
+        Delay_us(10);
     }
 }

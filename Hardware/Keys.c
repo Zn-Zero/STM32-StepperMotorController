@@ -2,14 +2,6 @@
 #include "stm32f10x.h" // Device header
 #include "peripheral_define.h"
 
-void Keys_Init(void)
-{
-    // 启停按键 PA0
-    Key_StartStop_Init();
-    // 三档定速按键 PB13
-    Key_SpeedLevel_Init();
-}
-
 // 启停按键 PA0 - 上拉输入
 void Key_StartStop_Init(void)
 {
@@ -67,4 +59,12 @@ void Key_SpeedLevel_Init(void)
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x01;
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x03;
     NVIC_Init(&NVIC_InitStructure);
+}
+
+void Keys_Init(void)
+{
+    // 启停按键 PA0
+    Key_StartStop_Init();
+    // 三档定速按键 PB13
+    Key_SpeedLevel_Init();
 }

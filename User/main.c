@@ -3,20 +3,13 @@
 
 int main(void) {
 
-    // 初始化GPIO
-    GPIO_InitAll();
+    // 使能所有用到的GPIO时钟
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB | RCC_APB2Periph_AFIO, ENABLE);
+    // 初始化
+    Peripheral_InitAll();
 
-    // 初始化外部中断
-    EXTI_InitAll();
-
-    // 初始化编码器定时器
-    Encoder_TIM_Init();
-
-    // 初始化电机PWM定时器 (50kHz: 72MHz / (71+1)/(19+1) = 50kHz)
-    MotorPWM_TIM_Init(20 - 1, 72 - 1); // arr psc
-
-    while (1) {
-
+    while (1)
+    {
     }
 }
 

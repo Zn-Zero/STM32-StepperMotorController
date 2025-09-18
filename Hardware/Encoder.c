@@ -61,6 +61,9 @@ void Encoder_C_Init(void)
     // 配置中断线映射
     GPIO_EXTILineConfig(GPIO_PortSourceGPIOA, GPIO_PinSource2); // 编码器按键
 
+    // 使能定时器时钟
+    // RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+
     EXTI_InitTypeDef EXTI_InitStructure;
 
     // 编码器按键中断配置 - 下降沿触发
