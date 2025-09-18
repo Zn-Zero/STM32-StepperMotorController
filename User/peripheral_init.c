@@ -8,8 +8,7 @@ void GPIO_InitAll(void)
     GPIO_InitTypeDef GPIO_InitStructure;
     
     // 使能所有用到的GPIO时钟
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB | 
-                          RCC_APB2Periph_AFIO, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB | RCC_APB2Periph_AFIO, ENABLE);
     
     // 按键初始化 - 上拉输入
     // 启停按键 PA0
@@ -21,11 +20,12 @@ void GPIO_InitAll(void)
     GPIO_InitStructure.GPIO_Pin = KEY_ENCODER_PIN;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
     GPIO_Init(KEY_ENCODER_PORT, &GPIO_InitStructure);
-    
+
     // 三档定速按键 PB13
-    GPIO_InitStructure.GPIO_Pin = KEY_SPEED_LEVEL_PIN;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
-    GPIO_Init(KEY_SPEED_LEVEL_PORT, &GPIO_InitStructure);
+    // 暂缓实现
+    // GPIO_InitStructure.GPIO_Pin = KEY_SPEED_LEVEL_PIN;
+    // GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+    // GPIO_Init(KEY_SPEED_LEVEL_PORT, &GPIO_InitStructure);
     
     // 编码器A/B相初始化 - 复用推挽输入 (定时器模式)
     GPIO_InitStructure.GPIO_Pin = ENCODER_A_PIN | ENCODER_B_PIN;
@@ -44,11 +44,12 @@ void GPIO_InitAll(void)
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(MOTOR_PUL_PORT, &GPIO_InitStructure);
-    
+
     // 传感器输入 PA7 - 模拟输入
-    GPIO_InitStructure.GPIO_Pin = SENSOR_PIN;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
-    GPIO_Init(SENSOR_PORT, &GPIO_InitStructure);
+    // 暂缓实现
+    // GPIO_InitStructure.GPIO_Pin = SENSOR_PIN;
+    // GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
+    // GPIO_Init(SENSOR_PORT, &GPIO_InitStructure);
     
     // 蜂鸣器 PB0 - 推挽输出
     GPIO_InitStructure.GPIO_Pin = BUZZER_PIN;
@@ -61,12 +62,13 @@ void GPIO_InitAll(void)
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(LED_PORT, &GPIO_InitStructure);
-    
+
     // 触摸屏I2C引脚初始化 - 复用开漏输出
-    GPIO_InitStructure.GPIO_Pin = TOUCH_SCL_PIN | TOUCH_SDA_PIN;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_OD;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_Init(GPIOB, &GPIO_InitStructure);
+    // 暂缓实现
+    // GPIO_InitStructure.GPIO_Pin = TOUCH_SCL_PIN | TOUCH_SDA_PIN;
+    // GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_OD;
+    // GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    // GPIO_Init(GPIOB, &GPIO_InitStructure);
     
     // 初始状态设置
     BUZZER_OFF();
@@ -83,7 +85,7 @@ void EXTI_InitAll(void)
     // 配置中断线映射
     GPIO_EXTILineConfig(GPIO_PortSourceGPIOA, GPIO_PinSource0);  // 启停按键
     GPIO_EXTILineConfig(GPIO_PortSourceGPIOA, GPIO_PinSource2);  // 编码器按键
-    GPIO_EXTILineConfig(GPIO_PortSourceGPIOB, GPIO_PinSource13); // 三档定速按键
+    // GPIO_EXTILineConfig(GPIO_PortSourceGPIOB, GPIO_PinSource13); // 三档定速按键
     
     // 启停按键中断配置 - 下降沿触发
     EXTI_InitStructure.EXTI_Line = KEY_START_STOP_EXTI;
@@ -98,9 +100,9 @@ void EXTI_InitAll(void)
     EXTI_Init(&EXTI_InitStructure);
     
     // 三档定速按键中断配置 - 下降沿触发
-    EXTI_InitStructure.EXTI_Line = KEY_SPEED_LEVEL_EXTI;
-    EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
-    EXTI_Init(&EXTI_InitStructure);
+    // EXTI_InitStructure.EXTI_Line = KEY_SPEED_LEVEL_EXTI;
+    // EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
+    // EXTI_Init(&EXTI_InitStructure);
     
     // 配置中断优先级
     // 启停按键中断
@@ -117,10 +119,10 @@ void EXTI_InitAll(void)
     NVIC_Init(&NVIC_InitStructure);
     
     // 三档定速按键中断
-    NVIC_InitStructure.NVIC_IRQChannel = KEY_SPEED_LEVEL_IRQ;
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x01;
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x03;
-    NVIC_Init(&NVIC_InitStructure);
+    // NVIC_InitStructure.NVIC_IRQChannel = KEY_SPEED_LEVEL_IRQ;
+    // NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x01;
+    // NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x03;
+    // NVIC_Init(&NVIC_InitStructure);
 }
 
 // 编码器定时器初始化 (编码器模式)
@@ -161,39 +163,8 @@ void Encoder_TIM_Init(void)
     TIM_Cmd(ENCODER_TIM, ENABLE);
 }
 
-// 电机PWM定时器初始化
-void MotorPWM_TIM_Init(uint16_t arr, uint16_t psc)
-{
-    TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
-    TIM_OCInitTypeDef TIM_OCInitStructure;
-    
-    // 使能定时器时钟
-    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
-    
-    // 定时器基本配置
-    TIM_TimeBaseStructure.TIM_Period = arr;      // 自动重装载值
-    TIM_TimeBaseStructure.TIM_Prescaler = psc;   // 预分频值
-    TIM_TimeBaseStructure.TIM_ClockDivision = 0;
-    TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-    TIM_TimeBaseInit(MOTOR_PUL_TIM, &TIM_TimeBaseStructure);
-    
-    // PWM模式配置
-    TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
-    TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-    TIM_OCInitStructure.TIM_Pulse = 0;           // 初始占空比0
-    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
-    TIM_OC1Init(MOTOR_PUL_TIM, &TIM_OCInitStructure);
-    
-    // 使能PWM输出比较预装载
-    TIM_OC1PreloadConfig(MOTOR_PUL_TIM, TIM_OCPreload_Enable);
-    // 使能定时器预装载寄存器
-    TIM_ARRPreloadConfig(MOTOR_PUL_TIM, ENABLE);
-    
-    // 使能定时器
-    TIM_Cmd(MOTOR_PUL_TIM, ENABLE);
-}
-
 // ADC初始化 (用于传感器)
+// 暂缓实现
 void ADC_InitSensor(void)
 {
     ADC_InitTypeDef ADC_InitStructure;
@@ -230,6 +201,7 @@ void ADC_InitSensor(void)
 }
 
 // I2C初始化 (用于触摸屏)
+// 暂缓实现
 void I2C_InitTouchScreen(void)
 {
     I2C_InitTypeDef I2C_InitStructure;
@@ -253,34 +225,23 @@ void I2C_InitTouchScreen(void)
 // 所有外设初始化
 void Peripheral_InitAll(void)
 {
-    // 配置系统时钟等（通常在main函数中）
-    // SystemInit();
-    
     // 初始化GPIO
-    GPIO_InitAll();
-    
+    // GPIO_InitAll();
+
     // 初始化外部中断
-    EXTI_InitAll();
-    
+    // EXTI_InitAll();
+
     // 初始化编码器定时器
-    Encoder_TIM_Init();
+    // Encoder_TIM_Init();
     
     // 初始化电机PWM定时器 (50kHz: 72MHz / (71+1)/(19+1) = 50kHz)
-    MotorPWM_TIM_Init(19, 71);
+    // MotorPWM_TIM_Init(20 - 1, 72 - 1); //arr psc
     
     // 初始化传感器ADC
-    ADC_InitSensor();
+    // ADC_InitSensor();
     
     // 初始化触摸屏I2C
-    I2C_InitTouchScreen();
-}
-
-// 设置电机PWM占空比 (0-1000对应0-100.0%)
-void Motor_SetPWM(uint16_t duty)
-{
-    if(duty > 1000) duty = 1000;
-    // 根据自动重装载值计算比较值
-    // TIM_SetCompare1(MOTOR_PUL_TIM, (uint16_t)(duty * TIM_GetAutoreload(MOTOR_PUL_TIM) / 1000));
+    // I2C_InitTouchScreen();
 }
 
 // 读取编码器值
