@@ -75,3 +75,11 @@ void Encoder_C_Init(void)
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x02;
     NVIC_Init(&NVIC_InitStructure);
 }
+
+// 读取编码器值
+int16_t Encoder_GetCount(void)
+{
+    int16_t count = TIM_GetCounter(ENCODER_TIM);
+    TIM_SetCounter(ENCODER_TIM, 0); // 读取后清零
+    return count;
+}
