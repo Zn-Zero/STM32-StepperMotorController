@@ -67,4 +67,36 @@
 #define MOTOR_DIR_REVERSE()    GPIO_ResetBits(MOTOR_DIR_PORT, MOTOR_DIR_PIN)
 #define MOTOR_DIR_TOGGLE()     MOTOR_DIR_PORT->ODR ^= MOTOR_DIR_PIN
 
+// 运行参数
+// 电机方向枚举
+typedef enum
+{
+    DIR_CW = 0, // 顺时针
+    DIR_CCW = 1 // 逆时针
+} MotorDir;
+
+// 电机状态枚举
+typedef enum
+{
+    MOTOR_STOP = 0,
+    MOTOR_RUN = 1
+} MotorState;
+
+// 参数宏定义
+#define MIN_SPEED 0             // 最慢 mm/min INIT_SPEE -> 0
+#define MAX_SPEED 600           // 最快 mm/min INIT_SPEE -> 10000
+#define ROUND_STEP 5000         // 一圈步数
+
+// 以下参数互补，选一使用
+#define INIT_FRE 1000           // 初始PWM频率      (换算速度 -> (INIT_FRE / ROUND_STEP) * SCREW_LEAD * 60)
+#define INIT_SPEED 60           // 初始速度 mm/min  (换算频率 -> INIT_SPEED / 60 / SCREW_LEAD * ROUND_STEP)
+
+#define SCREW_LEAD 5            // 丝杆导程
+
+
+#define TIMER_CLOCK 72000000  // 时钟频率 72MHz
+
+extern MotorDir DIR;
+extern MotorState ENA;
+
 #endif /* PERIPHERAL_DEFINE_H */

@@ -1,16 +1,30 @@
 #include "stm32f10x.h" // Device header
 #include "peripheral_define.h"
 #include "Delay.h"
+#include "Buzzer.h"
+#include "OLED.h"
 
-#define MAX_FREQ 200000 // 最大频率200kHz
-#define MIN_FREQ 10     // 最小频率10Hz，可根据需要调整
+#define MAX_FREQ MAX_SPEED / 60 / SCREW_LEAD *ROUND_STEP // 最大频率10kHz -> 600mm/min
+#define MIN_FREQ MIN_SPEED / 60 / SCREW_LEAD *ROUND_STEP // 最小频率0Hz -> 600mm/min
 
-// 全局变量存储当前ARR值，用于计算固定占空比
-static uint16_t current_arr = 0;
+MotorDir MOTOR_DIR = DIR_CW;
+MotorState MOTOR_ENA = MOTOR_STOP;
+
+// 当前ARR值
+uint16_t current_arr = 0;
+// 当前设置的pwm频率
+uint16_t set_fre = INIT_FRE;
+// 当前设置速度
+uint16_t set_speed = INIT_SPEED;
+// 当前正在运行的频率
+uint16_t current_speed = 0;
 
 // 电机PWM定时器初始化
-void Motor_Init(uint32_t frequency)
+void Motor_Init(int32_t speed)
 {
+    // 使能定时器时钟
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
+
     GPIO_InitTypeDef GPIO_InitStructure;
 
     // 电机方向控制 PA5 - 推挽输出
@@ -25,105 +39,205 @@ void Motor_Init(uint32_t frequency)
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(MOTOR_PUL_PORT, &GPIO_InitStructure);
 
-    // 限制频率范围
-    if (frequency > MAX_FREQ) frequency = MAX_FREQ;
-    if (frequency < MIN_FREQ) frequency = MIN_FREQ;
+    // 指定定时器使用内部时钟(72MHz)
+    // 可以不写，因为上电后默认使用内部时钟
+    TIM_InternalClockConfig(MOTOR_PUL_TIM);
+
+    // 限制速度范围
+    if (speed > MAX_SPEED)
+        speed = MAX_SPEED;
+    if (speed < MIN_SPEED)
+        speed = MIN_SPEED;
 
     // 计算预分频器和自动重装载值
-    uint32_t timer_clock = 72000000; // TIM2时钟为72MHz
     uint16_t prescaler = 0;
     uint16_t arr_value;
+    double frequency;
 
-    // 计算初始值
-    arr_value = (timer_clock / (frequency * (prescaler + 1))) - 1;
+    frequency = speed / 60 / SCREW_LEAD * ROUND_STEP;
 
-    // 确保ARR值不超过16位最大值
+    // 计算并四舍五入取整
+    double temp = (double)(TIMER_CLOCK / (frequency * (prescaler + 1)) - 1 + 0.5);
+    arr_value = (uint16_t)temp;
+
+    // 确保ARR不超过最大值
     while (arr_value > 0xFFFF)
     {
         prescaler++;
-        arr_value = (timer_clock / (frequency * (prescaler + 1))) - 1;
+        temp = (double)(TIMER_CLOCK / (frequency * (prescaler + 1)) - 1 + 0.5);
+        arr_value = (uint16_t)temp;
     }
 
     current_arr = arr_value; // 保存当前ARR值
 
-    // 使能定时器时钟
-    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
-
-    TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
     // 配置定时器时基
-    TIM_TimeBaseStructure.TIM_Period = arr_value;
-    TIM_TimeBaseStructure.TIM_Prescaler = prescaler;
-    TIM_TimeBaseStructure.TIM_ClockDivision = 0;
-    TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-    TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure);
+    // 定义时基初始化参数结构体
+    TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure;
+    // 配置滤波采样周期的时钟分频。分频越多，信号越稳定，但延迟越大
+    // [TIM_CKD_DIV1 -> 1分频(不分频) | TIM_CKD_DIV2 -> 2分频 | TIM_CKD_DIV4 -> 4分频]
+    TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1;
+    // 计数模式：向上计数 | 向下计数 | 对称计数
+    TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up;
+    // 计数器 (需要-1)
+    TIM_TimeBaseInitStructure.TIM_Period = 65535; // ARR(Auto Reload Register) -> 自动重装载寄存器
+    // 预分频器 (需要-1)
+    TIM_TimeBaseInitStructure.TIM_Prescaler = 65535; // PSC(Prescaler) —> 预分频器
+    // 重复计数器，仅限高级定时器(TIM1)。不使用时给0
+    TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 0;
+    TIM_TimeBaseInit(MOTOR_PUL_TIM, &TIM_TimeBaseInitStructure);
+
+    // 清除由于初始化时被立即执行的影响
+    TIM_ClearFlag(MOTOR_PUL_TIM, TIM_FLAG_Update);
 
     TIM_OCInitTypeDef TIM_OCInitStructure;
+
+    // 并非所有参数都需要使用，未使用的参数需要有默认值
+    TIM_OCStructInit(&TIM_OCInitStructure);
+
     // 配置PWM模式，固定50%占空比
+    // 输出模式
     TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
-    TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-    TIM_OCInitStructure.TIM_Pulse = arr_value / 2; // 50%占空比
+    // 设置输出比较的极性
     TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
-    TIM_OC1Init(TIM2, &TIM_OCInitStructure);
+    // 设置输出使能
+    TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
+    // 设置CCR(Capture/Compare Register) —> 捕获 / 比较寄存器
+    TIM_OCInitStructure.TIM_Pulse = arr_value / 2; // 50%占空比
+    TIM_OC1Init(MOTOR_PUL_TIM, &TIM_OCInitStructure);
 
     // 使能预装载
-    TIM_OC1PreloadConfig(TIM2, TIM_OCPreload_Enable);
-    TIM_ARRPreloadConfig(TIM2, ENABLE);
+    TIM_OC1PreloadConfig(MOTOR_PUL_TIM, TIM_OCPreload_Enable);
+    TIM_ARRPreloadConfig(MOTOR_PUL_TIM, ENABLE);
 
-    // 启动定时器
-    TIM_Cmd(TIM2, ENABLE);
-    TIM_CtrlPWMOutputs(TIM2, ENABLE); // 使能PWM输出
+    // 启动定时器 按钮启动
+    // TIM_Cmd(MOTOR_PUL_TIM, ENABLE);
+
+    // OLED_ShowNum(3, 6, frequency, 5);
 }
 
 // 重新设置PWM频率（控制步进电机速度）
-void Motor_SetFrequency(uint32_t frequency)
+void Motor_SetSpeed(int32_t speed)
 {
-    // 限制频率范围，确保高低电平均>2.5us
-    if (frequency > MAX_FREQ) frequency = MAX_FREQ;
-    if (frequency < MIN_FREQ) frequency = MIN_FREQ;
+    // 停止定时器
+    // TIM_Cmd(MOTOR_PUL_TIM, DISABLE);
 
-    uint32_t timer_clock = 72000000;
+    // 限制速度范围
+    if (speed > MAX_SPEED)
+        speed = MAX_SPEED;
+    if (speed < MIN_SPEED)
+        speed = MIN_SPEED;
+
+    // 计算预分频器和自动重装载值
     uint16_t prescaler = 0;
     uint16_t arr_value;
+    double frequency;
 
-    // 停止定时器
-    TIM_Cmd(TIM2, DISABLE);
+    frequency = speed / 60 / SCREW_LEAD * ROUND_STEP;
 
-    // 计算新的PSC和ARR值
-    arr_value = (timer_clock / (frequency * (prescaler + 1))) - 1;
+    // 计算并四舍五入取整
+    double temp = (double)(TIMER_CLOCK / (frequency * (prescaler + 1)) - 1 + 0.5);
+    arr_value = (uint16_t)temp;
 
+    // 确保ARR不超过最大值
     while (arr_value > 0xFFFF)
     {
         prescaler++;
-        arr_value = (timer_clock / (frequency * (prescaler + 1))) - 1;
+        temp = (double)(TIMER_CLOCK / (frequency * (prescaler + 1)) - 1 + 0.5);
+        arr_value = (uint16_t)temp;
     }
 
-    current_arr = arr_value; // 更新当前ARR值
+    current_arr = arr_value; // 保存当前ARR值
 
     // 更新定时器参数
-    TIM2->PSC = prescaler;
-    TIM2->ARR = arr_value;
-    TIM2->CCR1 = arr_value / 2; // 保持50%占空比
+    MOTOR_PUL_TIM->PSC = prescaler;
+    MOTOR_PUL_TIM->ARR = arr_value;
+    MOTOR_PUL_TIM->CCR1 = arr_value / 2; // 保持50%占空比
 
     // 重新启动定时器
-    TIM_Cmd(TIM2, ENABLE);
+    // TIM_Cmd(MOTOR_PUL_TIM, ENABLE);
+
+    // OLED_ShowNum(3, 6, frequency, 5);
 }
 
-// 梯形加速
-void Trapezoidal_Acceleration(uint32_t current, uint32_t target)
+uint32_t step = 1;     // 步长（），可减小以更平滑
+uint32_t delay_ms = 20; // 步间延时（ms），增大以降低加速度
+
+// 梯形加速 需要修改为根据速度
+void Trapezoidal_Acceleration(int32_t current, int32_t target)
 {
-    for (uint32_t freq = current; freq <= target; freq += 100)
+    // 若当前频率已高于目标，直接跳到目标（或报错）
+    if (current >= target)
     {
-        Motor_SetFrequency(freq);
-        Delay_us(10);
+        Motor_SetSpeed(target);
+        return;
+    }
+
+    for (uint32_t speed = current; speed < target;)
+    {
+        // 最后一步可能不足一个步长，直接跳到目标
+        uint32_t next_speed = (speed + step) > target ? target : (speed + step);
+        Motor_SetSpeed(next_speed);
+        speed = next_speed;
+
+        Delay_ms(delay_ms); // 用毫秒级延时降低加速度
     }
 }
 
 // 梯形减速
-void Trapezoidal_Deceleration(uint32_t current, uint32_t target)
+void Trapezoidal_Deceleration(int32_t current, int32_t target)
 {
-    for (uint32_t freq = current; freq >= target; freq -= 100)
+    // 若当前频率已低于目标，直接跳到目标
+    if (current <= target)
     {
-        Motor_SetFrequency(freq);
-        Delay_us(10);
+        Motor_SetSpeed(target);
+        return;
     }
+
+    for (uint32_t speed = current; speed > target;)
+    {
+        // 最后一步可能不足一个步长，直接跳到目标
+        uint32_t next_speed = (speed - step) < target ? target : (speed - step);
+        Motor_SetSpeed(next_speed);
+        speed = next_speed;
+
+        Delay_ms(delay_ms); // 用毫秒级延时降低加速度
+    }
+}
+
+// 缓慢加速启动
+void Motor_Start(void)
+{
+    TIM_Cmd(MOTOR_PUL_TIM, ENABLE);
+    Trapezoidal_Acceleration(current_speed, set_speed);
+    Buzzer_beep_ms(100);
+    LED_ON();
+    MOTOR_ENA = MOTOR_RUN;
+}
+
+// 立即启动
+void Motor_Start_Instantly(void)
+{
+    TIM_Cmd(MOTOR_PUL_TIM, ENABLE);
+    Buzzer_beep_ms(100);
+    LED_ON();
+    MOTOR_ENA = MOTOR_RUN;
+}
+
+// 缓慢减速停止
+void Motor_Stop(void)
+{
+    Trapezoidal_Deceleration(current_speed, 0);
+    TIM_Cmd(MOTOR_PUL_TIM, DISABLE);
+    Buzzer_beep_ms(100);
+    LED_OFF();
+    MOTOR_ENA = MOTOR_STOP;
+}
+
+// 立即停止
+void Motor_Stop_Instantly(void)
+{
+    TIM_Cmd(MOTOR_PUL_TIM, DISABLE);
+    Buzzer_beep_ms(100);
+    LED_OFF();
+    MOTOR_ENA = MOTOR_STOP;
 }
