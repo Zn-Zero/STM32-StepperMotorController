@@ -2,10 +2,10 @@
 #define __MOTOR_H
 
 /*初始化电机相关端口*/
-void Motor_Init(int32_t speed);
+void Motor_Init(uint32_t speed);
 
 /*重新设置PWM频率（控制步进电机速度）*/
-void Motor_SetSpeed(int32_t speed);
+void Motor_SetSpeed(uint32_t speed);
 
 /**
  * @brief   步进电机梯形加速控制
@@ -29,7 +29,7 @@ void Motor_SetSpeed(int32_t speed);
  *          // 从初始1000Hz加速到5000Hz
  *          Trapezoidal_Acceleration(1000, 5000);
  */
-void Trapezoidal_Acceleration(int32_t current, int32_t target);
+void Trapezoidal_Acceleration(uint32_t current, uint32_t target);
 
 /**
  * @brief   步进电机梯形减速速控制
@@ -51,7 +51,7 @@ void Trapezoidal_Acceleration(int32_t current, int32_t target);
  *          // 从5000Hz减速到0Hz
  *          Trapezoidal_Acceleration(5000, 0);
  */
-void Trapezoidal_Deceleration(int32_t current, int32_t target);
+void Trapezoidal_Deceleration(uint32_t current, uint32_t target);
 
 /*缓慢加速启动*/
 void Motor_Start(void);

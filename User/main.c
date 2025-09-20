@@ -40,6 +40,8 @@ int main(void) {
         OLED_ShowString(3, 1, "SPD: ");
         OLED_ShowNum(3, 6, set_speed, 3);
         OLED_ShowString(3, 9, "mm/min");
+
+        // OLED_ShowNum(4, 1, 21231, 9);
     }
 }
 

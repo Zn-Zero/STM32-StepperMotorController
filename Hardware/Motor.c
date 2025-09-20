@@ -20,7 +20,7 @@ uint16_t set_speed = INIT_SPEED;
 uint16_t current_speed = 0;
 
 // 电机PWM定时器初始化
-void Motor_Init(int32_t speed)
+void Motor_Init(uint32_t speed)
 {
     // 使能定时器时钟
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
@@ -42,7 +42,7 @@ void Motor_Init(int32_t speed)
     // 指定定时器使用内部时钟(72MHz)
     // 可以不写，因为上电后默认使用内部时钟
     TIM_InternalClockConfig(MOTOR_PUL_TIM);
-
+    
     // 限制速度范围
     if (speed > MAX_SPEED)
         speed = MAX_SPEED;
@@ -51,21 +51,21 @@ void Motor_Init(int32_t speed)
 
     // 计算预分频器和自动重装载值
     uint16_t prescaler = 0;
-    uint16_t arr_value;
-    double frequency;
+    uint32_t arr_value;
+    double temp, frequency;
 
-    frequency = speed / 60 / SCREW_LEAD * ROUND_STEP;
+    frequency = speed / 60.0 / SCREW_LEAD * ROUND_STEP;
 
     // 计算并四舍五入取整
-    double temp = (double)(TIMER_CLOCK / (frequency * (prescaler + 1)) - 1 + 0.5);
-    arr_value = (uint16_t)temp;
+    temp = (double)(TIMER_CLOCK / (frequency * (prescaler + 1)) - 1 + 0.5);
+    arr_value = (uint32_t)temp;
 
     // 确保ARR不超过最大值
     while (arr_value > 0xFFFF)
     {
         prescaler++;
         temp = (double)(TIMER_CLOCK / (frequency * (prescaler + 1)) - 1 + 0.5);
-        arr_value = (uint16_t)temp;
+        arr_value = (uint32_t)temp;
     }
 
     current_arr = arr_value; // 保存当前ARR值
@@ -79,9 +79,9 @@ void Motor_Init(int32_t speed)
     // 计数模式：向上计数 | 向下计数 | 对称计数
     TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up;
     // 计数器 (需要-1)
-    TIM_TimeBaseInitStructure.TIM_Period = 65535; // ARR(Auto Reload Register) -> 自动重装载寄存器
+    TIM_TimeBaseInitStructure.TIM_Period = current_arr; // ARR(Auto Reload Register) -> 自动重装载寄存器
     // 预分频器 (需要-1)
-    TIM_TimeBaseInitStructure.TIM_Prescaler = 65535; // PSC(Prescaler) —> 预分频器
+    TIM_TimeBaseInitStructure.TIM_Prescaler = prescaler; // PSC(Prescaler) —> 预分频器
     // 重复计数器，仅限高级定时器(TIM1)。不使用时给0
     TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 0;
     TIM_TimeBaseInit(MOTOR_PUL_TIM, &TIM_TimeBaseInitStructure);
@@ -116,7 +116,7 @@ void Motor_Init(int32_t speed)
 }
 
 // 重新设置PWM频率（控制步进电机速度）
-void Motor_SetSpeed(int32_t speed)
+void Motor_SetSpeed(uint32_t speed)
 {
     // 停止定时器
     // TIM_Cmd(MOTOR_PUL_TIM, DISABLE);
@@ -129,21 +129,21 @@ void Motor_SetSpeed(int32_t speed)
 
     // 计算预分频器和自动重装载值
     uint16_t prescaler = 0;
-    uint16_t arr_value;
+    uint32_t arr_value;
     double frequency;
 
     frequency = speed / 60 / SCREW_LEAD * ROUND_STEP;
 
     // 计算并四舍五入取整
     double temp = (double)(TIMER_CLOCK / (frequency * (prescaler + 1)) - 1 + 0.5);
-    arr_value = (uint16_t)temp;
+    arr_value = (uint32_t)temp;
 
     // 确保ARR不超过最大值
     while (arr_value > 0xFFFF)
     {
         prescaler++;
         temp = (double)(TIMER_CLOCK / (frequency * (prescaler + 1)) - 1 + 0.5);
-        arr_value = (uint16_t)temp;
+        arr_value = (uint32_t)temp;
     }
 
     current_arr = arr_value; // 保存当前ARR值
@@ -163,7 +163,7 @@ uint32_t step = 1;     // 步长（），可减小以更平滑
 uint32_t delay_ms = 20; // 步间延时（ms），增大以降低加速度
 
 // 梯形加速 需要修改为根据速度
-void Trapezoidal_Acceleration(int32_t current, int32_t target)
+void Trapezoidal_Acceleration(uint32_t current, uint32_t target)
 {
     // 若当前频率已高于目标，直接跳到目标（或报错）
     if (current >= target)
@@ -184,7 +184,7 @@ void Trapezoidal_Acceleration(int32_t current, int32_t target)
 }
 
 // 梯形减速
-void Trapezoidal_Deceleration(int32_t current, int32_t target)
+void Trapezoidal_Deceleration(uint32_t current, uint32_t target)
 {
     // 若当前频率已低于目标，直接跳到目标
     if (current <= target)

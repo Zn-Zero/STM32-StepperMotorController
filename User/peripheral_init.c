@@ -16,7 +16,10 @@ void Peripheral_InitAll(void)
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB | RCC_APB2Periph_AFIO, ENABLE);
 
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
-    
+
+    // 临时用法(模拟I2C)
+    OLED_Init();
+
     Buzzer_Init();
 
     Encoder_AB_Init();
@@ -27,7 +30,4 @@ void Peripheral_InitAll(void)
     LED_Init();
 
     Motor_Init(INIT_SPEED);
-
-    // 临时用法(模拟I2C)
-    OLED_Init();
 }

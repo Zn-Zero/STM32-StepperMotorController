@@ -55,12 +55,12 @@
 #define TOUCH_I2C              I2C2
 
 // 宏定义 - 方便操作外设
-#define BUZZER_ON()            GPIO_SetBits(BUZZER_PORT, BUZZER_PIN)
-#define BUZZER_OFF()           GPIO_ResetBits(BUZZER_PORT, BUZZER_PIN)
+#define BUZZER_OFF()           GPIO_SetBits(BUZZER_PORT, BUZZER_PIN)
+#define BUZZER_ON()            GPIO_ResetBits(BUZZER_PORT, BUZZER_PIN)
 #define BUZZER_TOGGLE()        BUZZER_PORT->ODR ^= BUZZER_PIN
 
-#define LED_ON()               GPIO_SetBits(LED_PORT, LED_PIN)
-#define LED_OFF()              GPIO_ResetBits(LED_PORT, LED_PIN)
+#define LED_OFF()              GPIO_SetBits(LED_PORT, LED_PIN)
+#define LED_ON()               GPIO_ResetBits(LED_PORT, LED_PIN)
 #define LED_TOGGLE()           LED_PORT->ODR ^= LED_PIN
 
 #define MOTOR_DIR_FORWARD()    GPIO_SetBits(MOTOR_DIR_PORT, MOTOR_DIR_PIN)
@@ -83,18 +83,18 @@ typedef enum
 } MotorState;
 
 // 参数宏定义
-#define MIN_SPEED 0             // 最慢 mm/min INIT_SPEE -> 0
-#define MAX_SPEED 600           // 最快 mm/min INIT_SPEE -> 10000
-#define ROUND_STEP 5000         // 一圈步数
+#define MIN_SPEED              1             // 最慢 mm/min INIT_SPEE -> 0
+#define MAX_SPEED              600           // 最快 mm/min INIT_SPEE -> 10000
+#define ROUND_STEP             5000         // 一圈步数
 
 // 以下参数互补，选一使用
-#define INIT_FRE 1000           // 初始PWM频率      (换算速度 -> (INIT_FRE / ROUND_STEP) * SCREW_LEAD * 60)
-#define INIT_SPEED 60           // 初始速度 mm/min  (换算频率 -> INIT_SPEED / 60 / SCREW_LEAD * ROUND_STEP)
+#define INIT_FRE               1000           // 初始PWM频率      (换算速度 -> (INIT_FRE / ROUND_STEP) * SCREW_LEAD * 60)
+#define INIT_SPEED             60           // 初始速度 mm/min  (换算频率 -> INIT_SPEED / 60 / SCREW_LEAD * ROUND_STEP)
 
-#define SCREW_LEAD 5            // 丝杆导程
+#define SCREW_LEAD             5            // 丝杆导程
 
 
-#define TIMER_CLOCK 72000000  // 时钟频率 72MHz
+#define TIMER_CLOCK            72000000  // 时钟频率 72MHz
 
 extern MotorDir DIR;
 extern MotorState ENA;
