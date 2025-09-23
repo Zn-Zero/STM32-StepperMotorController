@@ -5,10 +5,14 @@
 #include "stm32f10x_tim.h"
 
 // 按键定义
-#define KEY_START_STOP_PORT    GPIOA
-#define KEY_START_STOP_PIN     GPIO_Pin_0
-#define KEY_START_STOP_EXTI    EXTI_Line0
-#define KEY_START_STOP_IRQ     EXTI0_IRQn
+// #define KEY_START_STOP_PORT    GPIOA
+#define KEY_START_STOP_PORT    GPIOB
+// #define KEY_START_STOP_PIN     GPIO_Pin_0
+#define KEY_START_STOP_PIN     GPIO_Pin_15
+// #define KEY_START_STOP_EXTI    EXTI_Line0
+#define KEY_START_STOP_EXTI    EXTI_Line15
+// #define KEY_START_STOP_IRQ     EXTI0_IRQn
+#define KEY_START_STOP_IRQ     EXTI15_10_IRQn
 
 #define KEY_ENCODER_PORT       GPIOA
 #define KEY_ENCODER_PIN        GPIO_Pin_2
@@ -82,21 +86,27 @@ typedef enum
     MOTOR_RUN = 1
 } MotorState;
 
-// 参数宏定义
-#define MIN_SPEED              1             // 最慢 mm/min INIT_SPEE -> 0
-#define MAX_SPEED              600           // 最快 mm/min INIT_SPEE -> 10000
-#define ROUND_STEP             5000         // 一圈步数
-
-// 以下参数互补，选一使用
-#define INIT_FRE               1000           // 初始PWM频率      (换算速度 -> (INIT_FRE / ROUND_STEP) * SCREW_LEAD * 60)
-#define INIT_SPEED             60           // 初始速度 mm/min  (换算频率 -> INIT_SPEED / 60 / SCREW_LEAD * ROUND_STEP)
-
-#define SCREW_LEAD             5            // 丝杆导程
-
-
-#define TIMER_CLOCK            72000000  // 时钟频率 72MHz
-
 extern MotorDir DIR;
 extern MotorState ENA;
+
+extern uint16_t set_speed;     // 当前设置速度
+extern uint16_t current_speed; // 当前正在运行的速度
+
+extern uint16_t spd_preset[];
+extern uint8_t spd_idx;
+
+// 参数宏定义
+#define MIN_SPEED              1                          // 最慢 mm/min INIT_SPEE -> 0
+#define MAX_SPEED              600                        // 最快 mm/min INIT_SPEE -> 10000
+#define ROUND_STEP             5000                       // 一圈步数
+
+// 以下参数互补，选一使用
+#define INIT_FRE               1000                       // 初始PWM频率      (换算速度 -> (INIT_FRE / ROUND_STEP) * SCREW_LEAD * 60)
+#define INIT_SPEED             60                         // 初始速度 mm/min  (换算频率 -> INIT_SPEED / 60 / SCREW_LEAD * ROUND_STEP)
+
+#define SCREW_LEAD             5                          // 丝杆导程
+
+
+#define TIMER_CLOCK            72000000                   // 时钟频率 72MHz
 
 #endif /* PERIPHERAL_DEFINE_H */

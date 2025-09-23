@@ -13,13 +13,6 @@ extern MotorDir MOTOR_DIR;
 // 电机状态
 extern MotorState MOTOR_ENA;
 
-// 储当前设置的pwm频率
-extern uint16_t set_fre;
-// 当前设置速度
-extern uint16_t set_speed;
-// 当前正在运行的频率
-extern uint16_t current_fre;
-
 int main(void) {
 
     // 初始化
@@ -40,6 +33,9 @@ int main(void) {
         OLED_ShowString(3, 1, "SPD: ");
         OLED_ShowNum(3, 6, set_speed, 3);
         OLED_ShowString(3, 9, "mm/min");
+
+        OLED_ShowNum(4, 1, spd_idx, 1);
+        OLED_ShowNum(4, 3, spd_preset[spd_idx], 3);
 
         // OLED_ShowNum(4, 1, 21231, 9);
     }

@@ -2,10 +2,12 @@
 #include "stm32f10x.h" // Device header
 #include "peripheral_define.h"
 #include "Motor.h"
+#include "OLED.h"
+#include "Delay.h"
 
 extern MotorDir MOTOR_ENA;
 
-// 启停按键 PA0 - 上拉输入
+// 启停按键 PB15 - 上拉输入
 void Key_StartStop_Init(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
@@ -15,7 +17,7 @@ void Key_StartStop_Init(void)
     GPIO_Init(KEY_START_STOP_PORT, &GPIO_InitStructure);
 
     // 配置中断线映射
-    GPIO_EXTILineConfig(GPIO_PortSourceGPIOA, GPIO_PinSource0);
+    GPIO_EXTILineConfig(GPIO_PortSourceGPIOB, GPIO_PinSource15);
 
     EXTI_InitTypeDef EXTI_InitStructure;
 
@@ -36,13 +38,13 @@ void Key_StartStop_Init(void)
     NVIC_Init(&NVIC_InitStructure);
 }
 
-// 三档定速按键 PB13 - 下拉输入
+// 三档定速按键 PB13 - 上拉输入
 void Key_SpeedLevel_Init(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
 
     GPIO_InitStructure.GPIO_Pin = KEY_SPEED_LEVEL_PIN;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
     GPIO_Init(KEY_SPEED_LEVEL_PORT, &GPIO_InitStructure);
 
     // 配置中断线映射
@@ -66,16 +68,37 @@ void Key_SpeedLevel_Init(void)
 
 void Keys_Init(void)
 {
-    // 启停按键 PA0
+    // 启停按键 PB15
     Key_StartStop_Init();
     // 三档定速按键 PB13
     Key_SpeedLevel_Init();
 }
 
-void EXTI0_IRQHandler()
+// void EXTI0_IRQHandler()
+// {
+//     if (EXTI_GetITStatus(KEY_START_STOP_EXTI) == SET)
+//     {
+//         if (MOTOR_ENA == MOTOR_STOP)
+//         {
+//             Motor_Start_Instantly();
+//         }
+//         else
+//         {
+//             Motor_Stop_Instantly();
+//         }
+//         EXTI_ClearITPendingBit(KEY_START_STOP_EXTI);
+//     }
+// }
+
+void EXTI15_10_IRQHandler(void)
 {
-    if (EXTI_GetITStatus(EXTI_Line0) == SET)
+    // 电机启停
+    if (EXTI_GetITStatus(KEY_START_STOP_EXTI) == SET)
     {
+        Delay_ms(10);
+        while (GPIO_ReadInputDataBit(KEY_START_STOP_PORT, KEY_START_STOP_PIN) == 0)
+            Delay_ms(10);
+
         if (MOTOR_ENA == MOTOR_STOP)
         {
             Motor_Start_Instantly();
@@ -84,17 +107,26 @@ void EXTI0_IRQHandler()
         {
             Motor_Stop_Instantly();
         }
-        EXTI_ClearITPendingBit(EXTI_Line0);
+        EXTI_ClearITPendingBit(KEY_START_STOP_EXTI);
     }
-}
 
-void EXTI15_10_IRQHandler(void)
-{
-    if (EXTI_GetITStatus(EXTI_Line15) == SET)
+    // 三档定速切换
+    if (EXTI_GetITStatus(KEY_SPEED_LEVEL_EXTI) == SET)
     {
+        Delay_ms(10);
+        while (GPIO_ReadInputDataBit(KEY_SPEED_LEVEL_PORT, KEY_SPEED_LEVEL_PIN) == 0)
+        {
+            Delay_ms(10);
+        }
 
+        spd_idx ++;
+        if (spd_idx > 2)
+        {
+            spd_idx = 0;
+        }
 
-        
-        EXTI_ClearITPendingBit(EXTI_Line15);
+        Motor_SetSpeed(spd_preset[spd_idx]);
+
+        EXTI_ClearITPendingBit(KEY_SPEED_LEVEL_EXTI);
     }
 }

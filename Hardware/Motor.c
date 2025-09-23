@@ -16,8 +16,11 @@ uint16_t current_arr = 0;
 uint16_t set_fre = INIT_FRE;
 // 当前设置速度
 uint16_t set_speed = INIT_SPEED;
-// 当前正在运行的频率
+// 当前正在运行的速度
 uint16_t current_speed = 0;
+
+uint16_t spd_preset[] = {60, 300, 600};
+uint8_t spd_idx = 0;
 
 // 电机PWM定时器初始化
 void Motor_Init(uint32_t speed)
@@ -130,12 +133,12 @@ void Motor_SetSpeed(uint32_t speed)
     // 计算预分频器和自动重装载值
     uint16_t prescaler = 0;
     uint32_t arr_value;
-    double frequency;
+    double temp, frequency;
 
-    frequency = speed / 60 / SCREW_LEAD * ROUND_STEP;
+    frequency = speed / 60.0 / SCREW_LEAD * ROUND_STEP;
 
     // 计算并四舍五入取整
-    double temp = (double)(TIMER_CLOCK / (frequency * (prescaler + 1)) - 1 + 0.5);
+    temp = (double)(TIMER_CLOCK / (frequency * (prescaler + 1)) - 1 + 0.5);
     arr_value = (uint32_t)temp;
 
     // 确保ARR不超过最大值
@@ -153,26 +156,28 @@ void Motor_SetSpeed(uint32_t speed)
     MOTOR_PUL_TIM->ARR = arr_value;
     MOTOR_PUL_TIM->CCR1 = arr_value / 2; // 保持50%占空比
 
+    set_speed = speed;
+
     // 重新启动定时器
     // TIM_Cmd(MOTOR_PUL_TIM, ENABLE);
 
-    // OLED_ShowNum(3, 6, frequency, 5);
+    // OLED_ShowNum(4, 7, arr_value, 5);
 }
 
 uint32_t step = 1;     // 步长（），可减小以更平滑
 uint32_t delay_ms = 20; // 步间延时（ms），增大以降低加速度
 
 // 梯形加速 需要修改为根据速度
-void Trapezoidal_Acceleration(uint32_t current, uint32_t target)
+void Trapezoidal_Acceleration(uint32_t target)
 {
     // 若当前频率已高于目标，直接跳到目标（或报错）
-    if (current >= target)
+    if (current_speed >= target)
     {
         Motor_SetSpeed(target);
         return;
     }
 
-    for (uint32_t speed = current; speed < target;)
+    for (uint32_t speed = current_speed; speed < target;)
     {
         // 最后一步可能不足一个步长，直接跳到目标
         uint32_t next_speed = (speed + step) > target ? target : (speed + step);
@@ -181,19 +186,21 @@ void Trapezoidal_Acceleration(uint32_t current, uint32_t target)
 
         Delay_ms(delay_ms); // 用毫秒级延时降低加速度
     }
+
+    current_speed = target;
 }
 
 // 梯形减速
-void Trapezoidal_Deceleration(uint32_t current, uint32_t target)
+void Trapezoidal_Deceleration(uint32_t target)
 {
     // 若当前频率已低于目标，直接跳到目标
-    if (current <= target)
+    if (current_speed <= target)
     {
         Motor_SetSpeed(target);
         return;
     }
 
-    for (uint32_t speed = current; speed > target;)
+    for (uint32_t speed = current_speed; speed > target;)
     {
         // 最后一步可能不足一个步长，直接跳到目标
         uint32_t next_speed = (speed - step) < target ? target : (speed - step);
@@ -202,13 +209,15 @@ void Trapezoidal_Deceleration(uint32_t current, uint32_t target)
 
         Delay_ms(delay_ms); // 用毫秒级延时降低加速度
     }
+
+    current_speed = target;
 }
 
-// 缓慢加速启动
+// 缓慢加速
 void Motor_Start(void)
 {
     TIM_Cmd(MOTOR_PUL_TIM, ENABLE);
-    Trapezoidal_Acceleration(current_speed, set_speed);
+    Trapezoidal_Acceleration(set_speed);
     Buzzer_beep_ms(100);
     LED_ON();
     MOTOR_ENA = MOTOR_RUN;
@@ -223,10 +232,10 @@ void Motor_Start_Instantly(void)
     MOTOR_ENA = MOTOR_RUN;
 }
 
-// 缓慢减速停止
+// 缓慢减速
 void Motor_Stop(void)
 {
-    Trapezoidal_Deceleration(current_speed, 0);
+    Trapezoidal_Deceleration(set_speed);
     TIM_Cmd(MOTOR_PUL_TIM, DISABLE);
     Buzzer_beep_ms(100);
     LED_OFF();
@@ -241,3 +250,9 @@ void Motor_Stop_Instantly(void)
     LED_OFF();
     MOTOR_ENA = MOTOR_STOP;
 }
+
+// 变速
+// void Motor_Change_Speed(uint32_t speed)
+// {
+    
+// }
