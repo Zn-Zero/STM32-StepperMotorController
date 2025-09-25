@@ -8,11 +8,6 @@
 #include "Motor.h"
 #include "OLED.h"
 
-// 电机方向
-extern MotorDir MOTOR_DIR;
-// 电机状态
-extern MotorState MOTOR_ENA;
-
 int main(void) {
 
     // 初始化
@@ -20,6 +15,8 @@ int main(void) {
 
     while (1)
     {
+        Encoder_GetSpeed();
+
         OLED_ShowString(1, 1, "ENA: ");
         if (MOTOR_ENA == MOTOR_RUN)
         {
@@ -29,13 +26,22 @@ int main(void) {
         {
             OLED_ShowString(1, 6, "STOP");
         }
-        OLED_ShowString(2, 1, "DIR: CW");
+        OLED_ShowString(2, 1, "DIR: ");
+        if (MOTOR_DIR == DIR_CW)
+        {
+            OLED_ShowString(2, 6, "CW ");
+        }
+        else
+        {
+            OLED_ShowString(2, 6, "CCW");
+        }
+        
         OLED_ShowString(3, 1, "SPD: ");
         OLED_ShowNum(3, 6, set_speed, 3);
         OLED_ShowString(3, 9, "mm/min");
 
-        OLED_ShowNum(4, 1, spd_idx, 1);
-        OLED_ShowNum(4, 3, spd_preset[spd_idx], 3);
+        // OLED_ShowNum(4, 1, Encoder_GetCount(), 3);
+        // OLED_ShowNum(4, 3, spd_preset[spd_idx], 3);
 
         // OLED_ShowNum(4, 1, 21231, 9);
     }

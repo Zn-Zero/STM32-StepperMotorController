@@ -23,7 +23,6 @@ void Peripheral_InitAll(void)
     Buzzer_Init();
 
     Encoder_AB_Init();
-    Encoder_C_Init();
 
     Keys_Init();
 
