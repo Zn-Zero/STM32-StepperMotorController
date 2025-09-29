@@ -246,9 +246,14 @@ void EXTI9_5_IRQHandler()
         while (GPIO_ReadInputDataBit(KEY_UP_LIMIT_PORT, KEY_UP_LIMIT_PIN) == 0)
         {
             Delay_ms(10);
+            TIM_Cmd(MOTOR_PUL_TIM, DISABLE);
         }
 
         // todo 上限位
+        MOTOR_DIR_REVERSE();
+        MOTOR_DIR = DIR_CW;
+
+        TIM_Cmd(MOTOR_PUL_TIM, ENABLE);
 
         EXTI_ClearITPendingBit(KEY_UP_LIMIT_EXTI);
     }
@@ -260,9 +265,13 @@ void EXTI9_5_IRQHandler()
         while (GPIO_ReadInputDataBit(KEY_DOWN_LIMIT_PORT, KEY_DOWN_LIMIT_PIN) == 0)
         {
             Delay_ms(10);
+            TIM_Cmd(MOTOR_PUL_TIM, DISABLE);
         }
 
         // todo 下限位
+        MOTOR_DIR_FORWARD();
+        MOTOR_DIR = DIR_CCW;
+        TIM_Cmd(MOTOR_PUL_TIM, ENABLE);
 
         EXTI_ClearITPendingBit(KEY_DOWN_LIMIT_EXTI);
     }
