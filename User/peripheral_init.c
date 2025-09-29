@@ -28,5 +28,7 @@ void Peripheral_InitAll(void)
 
     LED_Init();
 
+    PD_Init();
+
     Motor_Init(INIT_SPEED);
 }
